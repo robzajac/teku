@@ -41,6 +41,9 @@ public class SpecConfigAltairImpl extends DelegatingSpecConfig implements SpecCo
   private final int minSyncCommitteeParticipants;
   private final int updateTimeout;
 
+  // Light client
+  private final int syncCommitteeBranchLength;
+
   public SpecConfigAltairImpl(
       final SpecConfig specConfig,
       final UInt64 inactivityPenaltyQuotientAltair,
@@ -53,7 +56,8 @@ public class SpecConfigAltairImpl extends DelegatingSpecConfig implements SpecCo
       final Bytes4 altairForkVersion,
       final UInt64 altairForkEpoch,
       final int minSyncCommitteeParticipants,
-      final int updateTimeout) {
+      final int updateTimeout,
+      final int syncCommitteeBranchLength) {
     super(specConfig);
     this.inactivityPenaltyQuotientAltair = inactivityPenaltyQuotientAltair;
     this.minSlashingPenaltyQuotientAltair = altairMinSlashingPenaltyQuotient;
@@ -66,6 +70,7 @@ public class SpecConfigAltairImpl extends DelegatingSpecConfig implements SpecCo
     this.altairForkEpoch = altairForkEpoch;
     this.minSyncCommitteeParticipants = minSyncCommitteeParticipants;
     this.updateTimeout = updateTimeout;
+    this.syncCommitteeBranchLength = syncCommitteeBranchLength;
   }
 
   public static SpecConfigAltair required(final SpecConfig specConfig) {
@@ -131,6 +136,11 @@ public class SpecConfigAltairImpl extends DelegatingSpecConfig implements SpecCo
   @Override
   public int getUpdateTimeout() {
     return updateTimeout;
+  }
+
+  @Override
+  public int getSyncCommitteeBranchLength() {
+    return syncCommitteeBranchLength;
   }
 
   @Override

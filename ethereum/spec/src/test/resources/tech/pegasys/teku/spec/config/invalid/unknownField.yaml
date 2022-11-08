@@ -23,6 +23,11 @@ INACTIVITY_SCORE_BIAS: 4
 INACTIVITY_SCORE_RECOVERY_RATE: 16
 
 
+# Light client
+# ---------------------------------------------------------------
+SYNC_COMMITTEE_BRANCH_LENGTH: 5
+
+
 # Time parameters
 # ---------------------------------------------------------------
 # 2**8 (= 256)
