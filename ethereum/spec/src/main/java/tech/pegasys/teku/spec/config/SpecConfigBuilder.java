@@ -710,6 +710,12 @@ public class SpecConfigBuilder {
       this.updateTimeout = updateTimeout;
       return this;
     }
+
+    public AltairBuilder syncCommitteeBranchLength(final Integer syncCommitteeBranchLength) {
+      checkNotNull(syncCommitteeBranchLength);
+      this.syncCommitteeBranchLength = syncCommitteeBranchLength;
+      return this;
+    }
   }
 
   // Bellatrix
