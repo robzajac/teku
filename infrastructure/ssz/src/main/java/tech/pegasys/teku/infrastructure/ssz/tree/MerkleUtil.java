@@ -14,6 +14,8 @@
 package tech.pegasys.teku.infrastructure.ssz.tree;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import java.security.MessageDigest;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.Queue;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.teku.infrastructure.crypto.MessageDigestFactory;
 
 public class MerkleUtil {
 
@@ -57,6 +60,21 @@ public class MerkleUtil {
 
     Collections.reverse(proof);
     return Collections.unmodifiableList(proof);
+  }
+
+  public static Bytes32 calculateMerkleRoot(Bytes32 leaf, List<Bytes32> proof, long leafGeneralizedIndex) {
+    if (proof.size() != GIndexUtil.gIdxGetDepth(leafGeneralizedIndex)) {
+      throw new IllegalArgumentException("Invalid proof for node index: " + leafGeneralizedIndex);
+    }
+
+    MessageDigest digest = MessageDigestFactory.createSha256();
+
+    List<Long> pathToNode = getPathToNode(leafGeneralizedIndex);
+    Collections.reverse(pathToNode);
+
+    for (Bytes32 proofValue : proof) {
+      
+    }
   }
 
   /**

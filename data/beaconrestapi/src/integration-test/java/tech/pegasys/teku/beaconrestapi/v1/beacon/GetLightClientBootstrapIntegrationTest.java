@@ -26,12 +26,14 @@ import tech.pegasys.teku.beaconrestapi.AbstractDataBackedRestAPIIntegrationTest;
 import tech.pegasys.teku.beaconrestapi.handlers.v1.beacon.lightclient.GetLightClientBootstrap;
 import tech.pegasys.teku.ethereum.json.types.SharedApiTypes;
 import tech.pegasys.teku.infrastructure.json.JsonUtil;
+import tech.pegasys.teku.infrastructure.ssz.tree.MerkleUtil;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlockHeader;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientBootstrap;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientBootstrapSchema;
 import tech.pegasys.teku.spec.datastructures.state.SyncCommittee;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
+import tech.pegasys.teku.spec.datastructures.state.beaconstate.common.BeaconStateFields;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.versions.altair.BeaconStateAltair;
 import tech.pegasys.teku.spec.schemas.SchemaDefinitionsAltair;
 
@@ -65,8 +67,14 @@ public class GetLightClientBootstrapIntegrationTest
         JsonUtil.parse(
             response.body().string(), SharedApiTypes.withDataWrapper(lightClientBootstrapSchema));
 
+    long syncCommitteeIndex = state.getSchema()
+            .getChildGeneralizedIndex(
+                    state.getSchema().getFieldIndex(BeaconStateFields.CURRENT_SYNC_COMMITTEE));
+    Bytes32 syncCommitteeRoot = state.getBackingNode().get(syncCommitteeIndex).hashTreeRoot();
+
     assertThat(parsedBootstrapResponse.getBeaconBlockHeader()).isEqualTo(expectedHeader);
     assertThat(parsedBootstrapResponse.getCurrentSyncCommittee()).isEqualTo(expectedSyncCommittee);
+    assertThat(MerkleUtil.calculateMerkleRoot(syncCommitteeRoot, parsedBootstrapResponse.getSyncCommitteeBranch().asListUnboxed(), syncCommitteeIndex)).isEqualTo(state.hashTreeRoot());
   }
 
   @Test
