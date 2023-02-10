@@ -310,7 +310,7 @@ public class JsonTypeDefinitionBeaconRestApi implements BeaconRestApi {
       builder =
           builder
               .endpoint(new GetLightClientBootstrap(dataProvider, schemaCache))
-              .endpoint(new GetLightClientUpdatesByRange(schemaCache));
+              .endpoint(new GetLightClientUpdatesByRange(dataProvider, schemaCache));
     }
 
     return builder.build();

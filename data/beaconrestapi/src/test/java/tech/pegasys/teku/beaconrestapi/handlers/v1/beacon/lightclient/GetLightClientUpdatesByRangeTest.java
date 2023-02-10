@@ -43,7 +43,7 @@ public class GetLightClientUpdatesByRangeTest extends AbstractMigratedBeaconHand
 
   @BeforeEach
   void setup() {
-    setHandler(new GetLightClientUpdatesByRange(schemaDefinitionCache));
+    setHandler(new GetLightClientUpdatesByRange(chainDataProvider, schemaDefinitionCache));
     dataStructureUtil = new DataStructureUtil(TestSpecFactory.createMinimalAltair());
     request.setQueryParameter("start_period", "1");
     request.setQueryParameter("count", "1");

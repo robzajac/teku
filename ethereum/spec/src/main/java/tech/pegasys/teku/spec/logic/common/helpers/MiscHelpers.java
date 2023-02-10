@@ -116,6 +116,12 @@ public class MiscHelpers {
     return epoch.times(specConfig.getSlotsPerEpoch());
   }
 
+  public UInt64 computeStartSlotAtSyncCommitteePeriod(UInt64 period) {
+    UInt64 epoch =
+        period.times(specConfig.toVersionAltair().orElseThrow().getEpochsPerSyncCommitteePeriod());
+    return computeStartSlotAtEpoch(epoch);
+  }
+
   public UInt64 computeTimeAtSlot(BeaconState state, UInt64 slot) {
     UInt64 slotsSinceGenesis = slot.minus(SpecConfig.GENESIS_SLOT);
     return state.getGenesisTime().plus(slotsSinceGenesis.times(specConfig.getSecondsPerSlot()));

@@ -16,6 +16,7 @@ package tech.pegasys.teku.beaconrestapi.handlers.v1.beacon.lightclient;
 import static tech.pegasys.teku.beaconrestapi.BeaconRestApiTypes.COUNT_PARAMETER;
 import static tech.pegasys.teku.beaconrestapi.BeaconRestApiTypes.START_PERIOD_PARAMETER;
 import static tech.pegasys.teku.ethereum.json.types.EthereumTypes.MILESTONE_TYPE;
+import static tech.pegasys.teku.infrastructure.http.HttpStatusCodes.SC_BAD_REQUEST;
 import static tech.pegasys.teku.infrastructure.http.HttpStatusCodes.SC_OK;
 import static tech.pegasys.teku.infrastructure.http.RestApiConstants.TAG_BEACON;
 import static tech.pegasys.teku.infrastructure.http.RestApiConstants.TAG_EXPERIMENTAL;
@@ -23,6 +24,9 @@ import static tech.pegasys.teku.infrastructure.http.RestApiConstants.TAG_EXPERIM
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import tech.pegasys.teku.api.ChainDataProvider;
+import tech.pegasys.teku.api.DataProvider;
 import tech.pegasys.teku.infrastructure.json.types.SerializableTypeDefinition;
 import tech.pegasys.teku.infrastructure.restapi.endpoints.EndpointMetadata;
 import tech.pegasys.teku.infrastructure.restapi.endpoints.RestApiEndpoint;
@@ -30,6 +34,7 @@ import tech.pegasys.teku.infrastructure.restapi.endpoints.RestApiRequest;
 import tech.pegasys.teku.infrastructure.restapi.openapi.response.JsonResponseContentTypeDefinition;
 import tech.pegasys.teku.infrastructure.restapi.openapi.response.OctetStreamResponseContentTypeDefinition;
 import tech.pegasys.teku.infrastructure.restapi.openapi.response.ResponseContentTypeDefinition;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientUpdate;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientUpdateResponse;
@@ -39,8 +44,16 @@ import tech.pegasys.teku.spec.schemas.SchemaDefinitionsAltair;
 
 public class GetLightClientUpdatesByRange extends RestApiEndpoint {
   public static final String ROUTE = "/eth/v1/beacon/light_client/updates";
+  private final ChainDataProvider chainDataProvider;
 
-  public GetLightClientUpdatesByRange(final SchemaDefinitionCache schemaDefinitionCache) {
+  public GetLightClientUpdatesByRange(
+      final DataProvider provider, final SchemaDefinitionCache schemaDefinitionCache) {
+    this(provider.getChainDataProvider(), schemaDefinitionCache);
+  }
+
+  public GetLightClientUpdatesByRange(
+      final ChainDataProvider chainDataProvider,
+      final SchemaDefinitionCache schemaDefinitionCache) {
     super(
         EndpointMetadata.get(ROUTE)
             .operationId("getLightClientUpdatesByRange")
@@ -57,11 +70,25 @@ public class GetLightClientUpdatesByRange extends RestApiEndpoint {
             .withNotAcceptedResponse()
             .withNotImplementedResponse()
             .build());
+    this.chainDataProvider = chainDataProvider;
   }
 
   @Override
   public void handleRequest(RestApiRequest request) throws JsonProcessingException {
-    request.respondError(501, "Not implemented");
+    // TODO: validate the params
+    final UInt64 startPeriod = request.getQueryParameter(START_PERIOD_PARAMETER);
+    final UInt64 count = request.getQueryParameter(COUNT_PARAMETER);
+
+    // JSON return type
+    final Optional<List<ObjectAndMetaData<LightClientUpdate>>> lightClientUpdates =
+        chainDataProvider.getLightClientUpdateByRange(startPeriod, count);
+
+    if (lightClientUpdates.isPresent()) {
+      request.respondOk(lightClientUpdates);
+    }
+
+    request.respondError(
+        SC_BAD_REQUEST, "No light client updates found for given start_period and count.");
   }
 
   private static ResponseContentTypeDefinition<List<ObjectAndMetaData<LightClientUpdate>>>

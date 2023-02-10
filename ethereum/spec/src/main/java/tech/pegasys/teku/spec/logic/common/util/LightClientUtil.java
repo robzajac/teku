@@ -18,6 +18,7 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlockHeader;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientBootstrap;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientHeader;
+import tech.pegasys.teku.spec.datastructures.lightclient.LightClientUpdate;
 import tech.pegasys.teku.spec.datastructures.state.SyncCommittee;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.versions.altair.BeaconStateAltair;
@@ -58,5 +59,12 @@ public class LightClientUtil {
     return schemaDefinitionsAltair
         .getLightClientBootstrapSchema()
         .create(lightClientHeader, currentSyncCommittee, currentSyncCommitteeProof);
+  }
+
+  public LightClientUpdate getLightClientUpdate(
+      final BeaconState state, final BeaconState attestedState) {
+    // TODO
+    // https://github.com/ethereum/consensus-specs/blob/dev/specs/altair/light-client/full-node.md#create_light_client_update
+    return null;
   }
 }

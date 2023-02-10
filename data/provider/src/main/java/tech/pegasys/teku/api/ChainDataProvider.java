@@ -23,6 +23,7 @@ import static tech.pegasys.teku.spec.config.SpecConfig.FAR_FUTURE_EPOCH;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,6 +32,7 @@ import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
@@ -60,6 +62,7 @@ import tech.pegasys.teku.spec.datastructures.blocks.SignedBeaconBlock;
 import tech.pegasys.teku.spec.datastructures.forkchoice.ProtoNodeData;
 import tech.pegasys.teku.spec.datastructures.forkchoice.ReadOnlyForkChoiceStrategy;
 import tech.pegasys.teku.spec.datastructures.lightclient.LightClientBootstrap;
+import tech.pegasys.teku.spec.datastructures.lightclient.LightClientUpdate;
 import tech.pegasys.teku.spec.datastructures.metadata.BlockAndMetaData;
 import tech.pegasys.teku.spec.datastructures.metadata.ObjectAndMetaData;
 import tech.pegasys.teku.spec.datastructures.metadata.StateAndMetaData;
@@ -67,6 +70,7 @@ import tech.pegasys.teku.spec.datastructures.operations.Attestation;
 import tech.pegasys.teku.spec.datastructures.state.CommitteeAssignment;
 import tech.pegasys.teku.spec.datastructures.state.SyncCommittee;
 import tech.pegasys.teku.spec.logic.common.statetransition.epoch.status.ValidatorStatuses;
+import tech.pegasys.teku.spec.logic.common.util.LightClientUtil;
 import tech.pegasys.teku.storage.client.ChainDataUnavailableException;
 import tech.pegasys.teku.storage.client.CombinedChainDataClient;
 import tech.pegasys.teku.storage.client.RecentChainData;
@@ -505,6 +509,56 @@ public class ChainDataProvider {
       final StateAndMetaData stateAndMetaData) {
     return spec.getLightClientUtil(stateAndMetaData.getData().getSlot())
         .map(clientUtil -> stateAndMetaData.map(clientUtil::getLightClientBootstrap));
+  }
+
+  public Optional<List<ObjectAndMetaData<LightClientUpdate>>> getLightClientUpdateByRange(
+      final UInt64 startPeriod, final UInt64 count) {
+    Stream<UInt64> periods = UInt64.range(startPeriod, startPeriod.plus(count));
+    List<ObjectAndMetaData<LightClientUpdate>> lightClientUpdates = new ArrayList<>();
+
+    for (UInt64 period : periods.collect(toList())) {
+      UInt64 slot = spec.computeStartSlotAtSyncCommitteePeriod(period);
+      Optional<ObjectAndMetaData<LightClientUpdate>> maybeLcu = getLightClientUpdate(slot);
+
+      if (maybeLcu.isPresent()) {
+        lightClientUpdates.add(maybeLcu.get());
+      } else {
+        break;
+      }
+    }
+
+    if (lightClientUpdates.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(lightClientUpdates);
+  }
+
+  private Optional<ObjectAndMetaData<LightClientUpdate>> getLightClientUpdate(final UInt64 slot) {
+    // Read the appropriate beacon states and pass it to the light client util.
+    Optional<StateAndMetaData> maybeAttestedState =
+        defaultStateSelectorFactory.forSlot(slot).getState().join();
+    Optional<StateAndMetaData> maybeState =
+        defaultStateSelectorFactory.forSlot(slot.plus(1)).getState().join();
+    Optional<LightClientUtil> util = spec.getLightClientUtil(slot);
+
+    if (maybeAttestedState.isPresent()) {
+      if (maybeState.isPresent()) {
+        if (util.isPresent()) {
+          StateAndMetaData attestedStateAndMetadata = maybeAttestedState.get();
+          StateAndMetaData stateAndMetaData = maybeState.get();
+          LightClientUtil lightClientUtil = util.get();
+
+          return Optional.of(
+              attestedStateAndMetadata.map(
+                  attestedState ->
+                      lightClientUtil.getLightClientUpdate(
+                          stateAndMetaData.getData(), attestedState)));
+        }
+      }
+    }
+
+    return Optional.empty();
   }
 
   public SafeFuture<Optional<ObjectAndMetaData<StateSyncCommitteesData>>> getStateSyncCommittees(

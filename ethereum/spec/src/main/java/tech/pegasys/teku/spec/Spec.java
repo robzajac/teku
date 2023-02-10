@@ -364,6 +364,11 @@ public class Spec {
     return atSlot(slot).miscHelpers().computeEpochAtSlot(slot);
   }
 
+  public UInt64 computeStartSlotAtSyncCommitteePeriod(final UInt64 period) {
+    // TODO, find a way to compute from config
+    return period.times(8192);
+  }
+
   public UInt64 computeTimeAtSlot(BeaconState state, UInt64 slot) {
     return atSlot(slot).miscHelpers().computeTimeAtSlot(state, slot);
   }
